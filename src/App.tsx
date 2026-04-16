@@ -1,60 +1,65 @@
-import { useState, useEffect } from 'react'
-import { supabase } from './lib/supabaseClient'
-import './App.css'
+import { useState, useEffect } from "react";
+import { supabase } from "./lib/supabaseClient";
+import "./App.css";
+
+interface Todo {
+  id: number;
+  text: string;
+  created_at?: string;
+}
 
 function App() {
-  const [todos, setTodos] = useState([])
-  const [inputValue, setInputValue] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTodos()
-  }, [])
+    fetchTodos();
+  }, []);
 
   async function fetchTodos() {
-    setLoading(true)
+    setLoading(true);
     const { data, error } = await supabase
-      .from('todos')
-      .select('*')
-      .order('created_at', { ascending: true })
+      .from("todos")
+      .select("*")
+      .order("created_at", { ascending: true });
 
     if (error) {
-      console.error('Error fetching todos:', error)
+      console.error("Error fetching todos:", error);
     } else {
-      setTodos(data)
+      setTodos(data);
     }
-    setLoading(false)
+    setLoading(false);
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!inputValue.trim()) return
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
 
     const { data, error } = await supabase
-      .from('todos')
+      .from("todos")
       .insert({ text: inputValue.trim() })
-      .select()
+      .select();
 
     if (error) {
-      console.error('Error adding todo:', error)
+      console.error("Error adding todo:", error);
     } else {
-      setTodos([...todos, data[0]])
-      setInputValue('')
+      if (data && data.length > 0) {
+        setTodos([...todos, data[0]]);
+      }
+      setInputValue("");
     }
-  }
+  };
 
-  const deleteTodo = async (id) => {
-    const { error } = await supabase
-      .from('todos')
-      .delete()
-      .eq('id', id)
+  const deleteTodo = async (id: number) => {
+    const { error } = await supabase.from("todos").delete().eq("id", id);
 
     if (error) {
-      console.error('Error deleting todo:', error)
+      console.error("Error deleting todo:", error);
     } else {
-      setTodos(todos.filter(todo => todo.id !== id))
+      setTodos(todos.filter((todo) => todo.id !== id));
     }
-  }
+  };
 
   return (
     <div className="app">
@@ -74,7 +79,7 @@ function App() {
         <p>Loading todos...</p>
       ) : (
         <ul className="todo-list">
-          {todos.map(todo => (
+          {todos.map((todo) => (
             <li key={todo.id} className="todo-item">
               <span>{todo.text}</span>
               <button
@@ -88,7 +93,7 @@ function App() {
         </ul>
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
