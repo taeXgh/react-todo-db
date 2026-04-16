@@ -1,49 +1,84 @@
 // src/App.tsx
-import { useState } from 'react'
-import './App.css'
+import { useState, useEffect } from "react";
+import { supabase } from "./lib/supabaseClient";
+import "./App.css";
 
 interface Todo {
-  id: number
-  text: string
+  id: number;
+  text: string;
 }
 
 function App() {
-  const [todos, setTodos] = useState<Todo[]>([])
-  const [inputValue, setInputValue] = useState('')
+  const [todos, setTodos] = useState([]);
+  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetchTodos();
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!inputValue.trim()) return
+  async function fetchTodos() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("todos")
+      .select("*")
+      .order("created_at", { ascending: true });
 
-    const newTodo: Todo = {
-      id: Date.now(),
-      text: inputValue.trim()
+    if (error) {
+      console.error("Error fetching todos:", error);
+    } else {
+      setTodos(data);
     }
+    setLoading(false);
+  }
+  const handleSubmit = async (e) => {
+  e.preventDefault()
+  if (!inputValue.trim()) return
 
-    setTodos([...todos, newTodo])
+  const { data, error } = await supabase
+    .from('todos')
+    .insert({ text: inputValue.trim() })
+    .select()
+
+  if (error) {
+    console.error('Error adding todo:', error)
+  } else {
+    setTodos([...todos, data[0]])
     setInputValue('')
   }
+};
 
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id))
+  const deleteTodo = async (id) => {
+  const { error } = await supabase
+    .from('todos')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting todo:', error)
+  } else {
+    setTodos(todos.filter(todo => todo.id !== id))
   }
+};
 
   return (
-    <div className="app">
-      <h1>React Todo App</h1>
+  <div className="app">
+    <h1>React Todo App</h1>
 
-      <form className="todo-form" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Add a new todo..."
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-        />
-        <button type="submit">Add</button>
-      </form>
+    <form className="todo-form" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="Add a new todo..."
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+      />
+      <button type="submit">Add</button>
+    </form>
 
+    {loading ? (
+      <p>Loading todos...</p>
+    ) : (
       <ul className="todo-list">
-        {todos.map((todo) => (
+        {todos.map(todo => (
           <li key={todo.id} className="todo-item">
             <span>{todo.text}</span>
             <button
@@ -55,8 +90,9 @@ function App() {
           </li>
         ))}
       </ul>
-    </div>
-  )
+    )}
+  </div>
+);
 }
 
-export default App
+export default App;
