@@ -1,94 +1,96 @@
-import { useState, useEffect } from 'react'
-import { supabase } from './lib/supabaseClient'
-import Auth from './Auth'
-import './App.css'
+import { useState, useEffect } from "react";
+import { supabase } from "./lib/supabaseClient";
+import Auth from "./Auth";
+import "./App.css";
 
 interface Todo {
-  id: number
-  text: string
-  created_at?: string
+  id: number;
+  text: string;
+  created_at?: string;
 }
 
 interface User {
-  email?: string
-  id: string
+  email?: string;
+  id: string;
 }
 
 function App() {
-  const [todos, setTodos] = useState<Todo[]>([])
-  const [inputValue, setInputValue] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<User | null>(null)
-  const [authLoading, setAuthLoading] = useState(true)
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } =
-      supabase.auth.onAuthStateChange((event, session) => {
-        setUser(session?.user ?? null)
-        setAuthLoading(false)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
 
-        if (session?.user) {
-          fetchTodos()
-        } else {
-          setTodos([])
-        }
-      })
+      if (session?.user) {
+        fetchTodos();
+      } else {
+        setTodos([]);
+      }
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
   async function fetchTodos() {
-    setLoading(true)
+    setLoading(true);
     const { data, error } = await supabase
-      .from('todos')
-      .select('*')
-      .order('created_at', { ascending: true })
+      .from("todos")
+      .select("*")
+      .order("created_at", { ascending: true });
 
     if (error) {
-      console.error('Error fetching todos:', error)
+      console.error("Error fetching todos:", error);
     } else {
-      setTodos(data)
+      setTodos(data);
     }
-    setLoading(false)
+    setLoading(false);
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!inputValue.trim()) return
+    e.preventDefault();
+    if (!inputValue.trim()) return;
 
     const { data, error } = await supabase
-      .from('todos')
+      .from("todos")
       .insert({ text: inputValue.trim() })
-      .select()
+      .select();
 
     if (error) {
-      console.error('Error adding todo:', error)
+      console.error("Error adding todo:", error);
     } else {
-      setTodos([...todos, data[0]])
-      setInputValue('')
+      setTodos([...todos, data[0]]);
+      setInputValue("");
     }
-  }
+  };
 
   const deleteTodo = async (id: number) => {
-    const { error } = await supabase
-      .from('todos')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from("todos").delete().eq("id", id);
 
     if (error) {
-      console.error('Error deleting todo:', error)
+      console.error("Error deleting todo:", error);
     } else {
-      setTodos(todos.filter(todo => todo.id !== id))
+      setTodos(todos.filter((todo) => todo.id !== id));
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) console.error('Error signing out:', error.message)
-  }
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Error signing out:", error.message);
+  };
 
   if (authLoading) {
-    return <div className="app"><p>Loading...</p></div>
+    return (
+      <div className="app">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   if (!user) {
@@ -97,7 +99,7 @@ function App() {
         <h1>React Todo App</h1>
         <Auth />
       </div>
-    )
+    );
   }
 
   return (
@@ -124,19 +126,21 @@ function App() {
         <p>Loading todos...</p>
       ) : (
         <ul className="todo-list">
-          {todos.map(todo => (
+          {todos.map((todo) => (
             <li key={todo.id} className="todo-item">
               <span>{todo.text}</span>
               <button
                 className="delete-btn"
                 onClick={() => deleteTodo(todo.id)}
-              >Delete</button>
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
