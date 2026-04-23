@@ -3,11 +3,22 @@ import { supabase } from './lib/supabaseClient'
 import Auth from './Auth'
 import './App.css'
 
+interface Todo {
+  id: number
+  text: string
+  created_at?: string
+}
+
+interface User {
+  email?: string
+  id: string
+}
+
 function App() {
-  const [todos, setTodos] = useState([])
+  const [todos, setTodos] = useState<Todo[]>([])
   const [inputValue, setInputValue] = useState('')
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<User | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
 
   useEffect(() => {
@@ -41,7 +52,7 @@ function App() {
     setLoading(false)
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!inputValue.trim()) return
 
@@ -58,7 +69,7 @@ function App() {
     }
   }
 
-  const deleteTodo = async (id) => {
+  const deleteTodo = async (id: number) => {
     const { error } = await supabase
       .from('todos')
       .delete()
